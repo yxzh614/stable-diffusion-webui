@@ -570,10 +570,9 @@ def create_ui(wrap_gradio_gpu_call):
                 with gr.Row(visible=False) as hr_options:
                     firstphase_width = gr.Slider(minimum=0, maximum=1024, step=64, label="Firstpass width", value=0)
                     firstphase_height = gr.Slider(minimum=0, maximum=1024, step=64, label="Firstpass height", value=0)
-                    scale_latent = gr.Checkbox(label='Scale latent|潜在空间放大', value=False)
                     denoising_strength = gr.Slider(minimum=0.0, maximum=1.0, step=0.01, label='Denoising strength|降噪强度', value=0.7)
 
-                with gr.Row():
+                with gr.Row(equal_height=True):
                     batch_count = gr.Slider(minimum=1, step=1, label='Batch count|批次数量', value=1)
                     batch_size = gr.Slider(minimum=1, maximum=8, step=1, label='Batch size|单批数量', value=1)
 
@@ -760,7 +759,7 @@ def create_ui(wrap_gradio_gpu_call):
                             mask_mode = gr.Radio(label="Mask mode", show_label=False, choices=["Draw mask|绘制蒙版", "Upload mask|上传蒙板"], type="index", value="Draw mask|绘制蒙版", elem_id="mask_mode")
                             inpainting_mask_invert = gr.Radio(label='Masking mode', show_label=False, choices=['Inpaint masked|蒙板区域', 'Inpaint not masked|非蒙板区域'], value='Inpaint masked|蒙板区域', type="index")
 
-                        inpainting_fill = gr.Radio(label='Masked content|遮挡内容', choices=['fill|填充', 'original|原样绘制', 'latent noise|潜在空间噪波', 'latent nothing潜在空间为空'], value='original|原样绘制', type="index")
+                        inpainting_fill = gr.Radio(label='Masked content|遮挡内容', choices=['fill|填充', 'original|原样绘制', 'latent noise|潜在空间噪波', 'latent nothing|潜在空间为空'], value='original|原样绘制', type="index")
 
                         with gr.Row():
                             inpaint_full_res = gr.Checkbox(label='Inpaint at full resolution|以全分辨率填充绘制', value=False)
@@ -1103,8 +1102,8 @@ def create_ui(wrap_gradio_gpu_call):
                     secondary_model_name = gr.Dropdown(modules.sd_models.checkpoint_tiles(), elem_id="modelmerger_secondary_model_name", label="Secondary Model Name|次模型名称")
                     tertiary_model_name = gr.Dropdown(modules.sd_models.checkpoint_tiles(), elem_id="modelmerger_tertiary_model_name", label="Tertiary model (C)")
                 custom_name = gr.Textbox(label="Custom Name (Optional)|自定义模型名称(可选)")
-                interp_amount = gr.Slider(minimum=0.0, maximum=1.0, step=0.05, label='Interpolation Amount|插值数量', value=0.3)
-                interp_method = gr.Radio(choices=["Weighted Sum|权重总和", "|双曲线", "Inverse Sigmoid|反双曲线"], value="Weighted Sum|权重总和", label="Interpolation Method|插值算法")
+                interp_amount = gr.Slider(minimum=0.0, maximum=1.0, step=0.05, label='Multiplier (M) - set to 0 to get model A', value=0.3)
+                interp_method = gr.Radio(choices=["Weighted Sum|权重总和", "Add difference"], value="Weighted Sum|权重总和", label="Interpolation Method|插值算法")
                 save_as_half = gr.Checkbox(value=False, label="Save as float16(保存为16位浮点型)")
                 modelmerger_merge = gr.Button(elem_id="modelmerger_merge", label="Merge", variant='primary')
 
