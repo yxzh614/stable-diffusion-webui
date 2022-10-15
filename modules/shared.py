@@ -177,6 +177,7 @@ options_templates.update(options_section(('saving-images', "Saving images/grids|
     "grid_format": OptionInfo('png', 'File format for grids|网格的文件格式'),
     "grid_extended_filename": OptionInfo(False, "Add extended info (seed, prompt) to filename when saving grid|保存网格时将扩展信息（随机种、提示词）添加到文件名"),
     "grid_only_if_multiple": OptionInfo(True, "Do not save grids consisting of one picture|不保存包含一张图片的网格"),
+    "grid_prevent_empty_spots": OptionInfo(False, "Prevent empty spots in grid (when set to autodetect)"),
     "n_rows": OptionInfo(-1, "Grid row count; use -1 for autodetect and 0 for it to be same as batch size|网格行计数；使用-1表示自动检测，使用0表示与批大小相同", gr.Slider, {"minimum": -1, "maximum": 16, "step": 1}),
 
     "enable_pnginfo": OptionInfo(True, "Save text information about generation parameters as chunks to png files|将有关生成参数的文本信息作为块保存到png文件"),
