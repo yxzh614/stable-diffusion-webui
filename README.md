@@ -1,8 +1,9 @@
 # Stable Diffusion web UI
 A browser interface based on Gradio library for Stable Diffusion.
 
+感谢[只剩一瓶辣椒酱](https://space.bilibili.com/35723238)的详细教程以及汉化：https://www.bilibili.com/video/BV1V8411s76T/
 
-汉化了部分文案，具体使用可以前往[体验教程](https://www.wolai.com/yuexianzhe/hoMDtpk1oDkq2dvXyBQeJq)
+个人[体验教程](https://www.wolai.com/yuexianzhe/hoMDtpk1oDkq2dvXyBQeJq)
 
 ![](txt2img_Screenshot.png)
 
