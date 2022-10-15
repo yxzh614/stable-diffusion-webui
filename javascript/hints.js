@@ -31,7 +31,7 @@ titles = {
     "fill|填充": "fill it with colors of the image",
     "original|原样绘制": "保留原来的样式(尽可能)",
     "latent noise|潜在空间噪波": "用潜在空间噪波填充",
-    "latent nothing潜在空间为空": "用潜在空间空白填充",
+    "latent nothing|潜在空间为空": "用潜在空间空白填充",
     "Inpaint at full resolution|以全分辨率填充绘制": "将蒙板区域放大到目标分辨率，进行蒙板绘画，缩小并粘贴到原始图像中",
 
     "Denoising strength|降噪强度": "确定算法对图像内容的保留程度。值为0时，一切都不会改变，值为1时，您将得到一个不相关的图像。如果值低于1.0，则处理所需的步骤将少于“采样步骤”滑块指定的步骤.",

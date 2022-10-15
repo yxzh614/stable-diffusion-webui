@@ -234,10 +234,10 @@ options_templates.update(options_section(('system', "System|系统"), {
 }))
 
 options_templates.update(options_section(('training', "TrainingTraining|训练"), {
-    "unload_models_when_training": OptionInfo(False, "nload VAE and CLIP form VRAM when training|训练时从VRAM中卸载VAE和CLIP"),
+    "unload_models_when_training": OptionInfo(False, "Unload VAE and CLIP from VRAM when training|训练时从VRAM中卸载VAE和CLIP"),
     "dataset_filename_word_regex": OptionInfo("", "Filename word regex|文件名词条正则"),
     "dataset_filename_join_string": OptionInfo(" ", "Filename join string|文件名加入字符串"),
-    "training_image_repeats_per_epoch": OptionInfo(100, "Number of repeats for a single input image per epoch; used only for displaying epoch number|每个纪元单个输入图像的重复次数；仅用于显示纪元编号", gr.Number, {"precision": 0}),
+    "training_image_repeats_per_epoch": OptionInfo(1, "Number of repeats for a single input image per epoch; used only for displaying epoch number|每个纪元单个输入图像的重复次数；仅用于显示纪元编号", gr.Number, {"precision": 0}),
     "training_write_csv_every": OptionInfo(500, "Save an csv containing the loss to log directory every N steps, 0 to disable"),
 }))
 
@@ -269,7 +269,7 @@ options_templates.update(options_section(('interrogate', "Interrogate Options|�
     "interrogate_clip_dict_limit": OptionInfo(1500, "CLIP: maximum number of lines in text file (0 = No limit)|查询：文本文件中的最大行数（0=无限制）"),
     "interrogate_deepbooru_score_threshold": OptionInfo(0.5, "Interrogate: deepbooru score threshold|查询：deepbooru分数阈值", gr.Slider, {"minimum": 0, "maximum": 1, "step": 0.01}),
     "deepbooru_sort_alpha": OptionInfo(True, "Interrogate: deepbooru sort alphabetically|查询：deepbooru按字母顺序排序"),
-    "deepbooru_use_spaces": OptionInfo(False, "use spaces for tags in deepbooru在deepbooru中为标记使用空格"),
+    "deepbooru_use_spaces": OptionInfo(False, "use spaces for tags in deepbooru|在deepbooru中为标记使用空格"),
     "deepbooru_escape": OptionInfo(True, "escape (\\) brackets in deepbooru (so they are used as literal brackets and not for emphasis)deepbooru中的escape（\\）括号（因此它们用作文字括号，而不是强调）"),
 }))
 
