@@ -7,6 +7,7 @@ import mimetypes
 import os
 import random
 import sys
+import tempfile
 import time
 import traceback
 import platform
@@ -80,6 +81,8 @@ art_symbol = '\U0001f3a8'  # 🎨
 paste_symbol = '\u2199\ufe0f'  # ↙
 folder_symbol = '\U0001f4c2'  # 📂
 refresh_symbol = '\U0001f504'  # 🔄
+save_style_symbol = '\U0001f4be'  # 💾
+apply_style_symbol = '\U0001f4cb'  # 📋
 
 
 def plaintext_to_html(text):
@@ -88,6 +91,14 @@ def plaintext_to_html(text):
 
 
 def image_from_url_text(filedata):
+    if type(filedata) == dict and filedata["is_file"]:
+        filename = filedata["name"]
+        tempdir = os.path.normpath(tempfile.gettempdir())
+        normfn = os.path.normpath(filename)
+        assert normfn.startswith(tempdir), 'trying to open image file not in temporary directory'
+
+        return Image.open(filename)
+
     if type(filedata) == list:
         if len(filedata) == 0:
             return None
@@ -143,10 +154,7 @@ def save_files(js_data, images, do_make_zip, index):
             writer.writerow(["prompt", "seed", "width", "height", "sampler", "cfgs", "steps", "filename", "negative_prompt"])
 
         for image_index, filedata in enumerate(images, start_index):
-            if filedata.startswith("data:image/png;base64,"):
-                filedata = filedata[len("data:image/png;base64,"):]
-
-            image = Image.open(io.BytesIO(base64.decodebytes(filedata.encode('utf-8'))))
+            image = image_from_url_text(filedata)
 
             is_grid = image_index < p.index_of_first_image
             i = 0 if is_grid else (image_index - p.index_of_first_image)
@@ -174,6 +182,23 @@ def save_files(js_data, images, do_make_zip, index):
         fullfns.insert(0, zip_filepath)
 
     return gr.File.update(value=fullfns, visible=True), '', '', plaintext_to_html(f"Saved: {filenames[0]}")
+
+
+def save_pil_to_file(pil_image, dir=None):
+    use_metadata = False
+    metadata = PngImagePlugin.PngInfo()
+    for key, value in pil_image.info.items():
+        if isinstance(key, str) and isinstance(value, str):
+            metadata.add_text(key, value)
+            use_metadata = True
+
+    file_obj = tempfile.NamedTemporaryFile(delete=False, suffix=".png", dir=dir)
+    pil_image.save(file_obj, pnginfo=(metadata if use_metadata else None))
+    return file_obj
+
+
+# override save to file function so that it also writes PNG info
+gr.processing_utils.save_pil_to_file = save_pil_to_file
 
 
 def wrap_gradio_call(func, extra_outputs=None):
@@ -304,7 +329,7 @@ def visit(x, func, path=""):
 
 def add_style(name: str, prompt: str, negative_prompt: str):
     if name is None:
-        return [gr_show(), gr_show()]
+        return [gr_show() for x in range(4)]
 
     style = modules.styles.PromptStyle(name, prompt, negative_prompt)
     shared.prompt_styles.styles[style.name] = style
@@ -429,30 +454,38 @@ def create_toprow(is_img2img):
     id_part = "img2img" if is_img2img else "txt2img"
 
     with gr.Row(elem_id="toprow"):
-        with gr.Column(scale=4):
+        with gr.Column(scale=6):
             with gr.Row():
                 with gr.Column(scale=80):
                     with gr.Row():
-                        prompt = gr.Textbox(label="Prompt", elem_id=f"{id_part}_prompt", show_label=False, placeholder="Prompt|特征提示词\n高级语法:\n1普通强调=(强调词),示例桌子上放着一瓶(可乐)-此时程序将会更关注括号里的(可乐),注意防翻车最好用英文括号,括号可以多重\n2权重强调=(强调词:1.4),示例(桌子:1.2)上放着一瓶(可乐:3.5)-此时程序会更加注意权重较大的(可乐:3.5)，快捷技巧-选中词按ctrl+上/下箭头可快速设置权重\n使用建议：\n提升质量=最前方添加像masterpiece,best quality等表述质量的词(例如杰作、最佳质量),必要情况可以加括号强调\n描述法：\n良好表述=下定义+关键词+尽可能“准确”的定义\n下定义=这是一幅XX风格的XX类型XX图(例如这是一幅维多利亚风格的动画概念图)\n关键词=质量相关、风格相关的词语，必要时加强调\n尽可能准确=场景里是什么有什么、人物有几个穿着什么(可具体到身体部位)、姿势如何、表情如何、年龄如何\n示例(需要翻译为英文)：杰作,令人惊叹,最佳质量,这是一幅令人惊叹的维多利亚风格动漫肖像画：在教堂的王座上，坐着一个身穿豪华白色婚纱的金发猫耳少女，表情庄严，教堂里闪着黑色的圣光，充满神圣感", lines=2)
-
-                with gr.Column(scale=1, elem_id="roll_col"):
-                    roll = gr.Button(value=art_symbol, elem_id="roll", visible=len(shared.artist_db.artists) > 0)
-                    paste = gr.Button(value=paste_symbol, elem_id="paste")
-                    token_counter = gr.HTML(value="<span></span>", elem_id=f"{id_part}_token_counter")
-                    token_button = gr.Button(visible=False, elem_id=f"{id_part}_token_button")
-
-                with gr.Column(scale=10, elem_id="style_pos_col"):
-                    prompt_style = gr.Dropdown(label="Style 1", elem_id=f"{id_part}_style_index", choices=[k for k, v in shared.prompt_styles.styles.items()], value=next(iter(shared.prompt_styles.styles.keys())), visible=len(shared.prompt_styles.styles) > 1)
+                        prompt = gr.Textbox(label="Prompt", elem_id=f"{id_part}_prompt", show_label=False, lines=2, 
+                            placeholder="Prompt (press Ctrl+Enter or Alt+Enter to generate)|特征提示词\n高级语法:\n1普通强调=(强调词),示例桌子上放着一瓶(可乐)-此时程序将会更关注括号里的(可乐),注意防翻车最好用英文括号,括号可以多重\n2权重强调=(强调词:1.4),示例(桌子:1.2)上放着一瓶(可乐:3.5)-此时程序会更加注意权重较大的(可乐:3.5)，快捷技巧-选中词按ctrl+上/下箭头可快速设置权重\n使用建议：\n提升质量=最前方添加像masterpiece,best quality等表述质量的词(例如杰作、最佳质量),必要情况可以加括号强调\n描述法：\n良好表述=下定义+关键词+尽可能“准确”的定义\n下定义=这是一幅XX风格的XX类型XX图(例如这是一幅维多利亚风格的动画概念图)\n关键词=质量相关、风格相关的词语，必要时加强调\n尽可能准确=场景里是什么有什么、人物有几个穿着什么(可具体到身体部位)、姿势如何、表情如何、年龄如何\n示例(需要翻译为英文)：杰作,令人惊叹,最佳质量,这是一幅令人惊叹的维多利亚风格动漫肖像画：在教堂的王座上，坐着一个身穿豪华白色婚纱的金发猫耳少女，表情庄严，教堂里闪着黑色的圣光，充满神圣感"
+                        )
 
             with gr.Row():
-                with gr.Column(scale=8):
+                with gr.Column(scale=80):
                     with gr.Row():
-                        negative_prompt = gr.Textbox(label="Negative prompt", elem_id="negative_prompt", show_label=False, placeholder="Negative prompt|否定提示词,用来过滤一些不好的特征\n使用建议:\n防翻车咒语=nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry", lines=2)
-                with gr.Column(scale=1, elem_id="roll_col"):
-                    sh = gr.Button(elem_id="sh", visible=True)                           
+                        negative_prompt = gr.Textbox(label="Negative prompt", elem_id=f"{id_part}_neg_prompt", show_label=False, lines=2, 
+                            placeholder="Negative prompt (press Ctrl+Enter or Alt+Enter to generate)|否定提示词,用来过滤一些不好的特征\n使用建议:\n防翻车咒语=nsfw, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry"
+                        )
 
-                with gr.Column(scale=1, elem_id="style_neg_col"):
-                    prompt_style2 = gr.Dropdown(label="Style 2", elem_id=f"{id_part}_style2_index", choices=[k for k, v in shared.prompt_styles.styles.items()], value=next(iter(shared.prompt_styles.styles.keys())), visible=len(shared.prompt_styles.styles) > 1)
+        with gr.Column(scale=1, elem_id="roll_col"):
+            roll = gr.Button(value=art_symbol, elem_id="roll", visible=len(shared.artist_db.artists) > 0)
+            paste = gr.Button(value=paste_symbol, elem_id="paste")
+            save_style = gr.Button(value=save_style_symbol, elem_id="style_create")
+            prompt_style_apply = gr.Button(value=apply_style_symbol, elem_id="style_apply")
+
+            token_counter = gr.HTML(value="<span></span>", elem_id=f"{id_part}_token_counter")
+            token_button = gr.Button(visible=False, elem_id=f"{id_part}_token_button")
+
+        button_interrogate = None
+        button_deepbooru = None
+        if is_img2img:
+            with gr.Column(scale=1, elem_id="interrogate_col"):
+                button_interrogate = gr.Button('Interrogate CLIP\n词条反求', elem_id="interrogate")
+
+                if cmd_opts.deepdanbooru:
+                    button_deepbooru = gr.Button('Interrogate\nDeepBooru', elem_id="deepbooru")
 
         with gr.Column(scale=1):
             with gr.Row():
@@ -472,20 +505,14 @@ def create_toprow(is_img2img):
                     outputs=[],
                 )
 
-            with gr.Row(scale=1):
-                if is_img2img:
-                    interrogate = gr.Button('Interrogate CLIP\n词条反求', elem_id="interrogate")
-                    if cmd_opts.deepdanbooru:
-                        deepbooru = gr.Button('Interrogate\nDeepBooru', elem_id="deepbooru")
-                    else:
-                        deepbooru = None
-                else:
-                    interrogate = None
-                    deepbooru = None
-                prompt_style_apply = gr.Button('Apply style|应用风格', elem_id="style_apply")
-                save_style = gr.Button('Create style|创建风格', elem_id="style_create")
+            with gr.Row():
+                with gr.Column(scale=1, elem_id="style_pos_col"):
+                    prompt_style = gr.Dropdown(label="Style 1", elem_id=f"{id_part}_style_index", choices=[k for k, v in shared.prompt_styles.styles.items()], value=next(iter(shared.prompt_styles.styles.keys())))
 
-    return prompt, roll, prompt_style, negative_prompt, prompt_style2, submit, interrogate, deepbooru, prompt_style_apply, save_style, paste, token_counter, token_button
+                with gr.Column(scale=1, elem_id="style_neg_col"):
+                    prompt_style2 = gr.Dropdown(label="Style 2", elem_id=f"{id_part}_style2_index", choices=[k for k, v in shared.prompt_styles.styles.items()], value=next(iter(shared.prompt_styles.styles.keys())))
+
+    return prompt, roll, prompt_style, negative_prompt, prompt_style2, submit, button_interrogate, button_deepbooru, prompt_style_apply, save_style, paste, token_counter, token_button
 
 
 def setup_progressbar(progressbar, preview, id_part, textinfo=None):
@@ -589,7 +616,7 @@ def create_ui(wrap_gradio_gpu_call):
                     txt2img_preview = gr.Image(elem_id='txt2img_preview', visible=False)
                     txt2img_gallery = gr.Gallery(label='Output', show_label=False, elem_id='txt2img_gallery').style(grid=4)
 
-                with gr.Group():
+                with gr.Column():
                     with gr.Row():
                         save = gr.Button('Save|保存')
                         send_to_img2img = gr.Button('Send to img2img|发送到图像到图像')
@@ -745,10 +772,10 @@ def create_ui(wrap_gradio_gpu_call):
 
                 with gr.Tabs(elem_id="mode_img2img") as tabs_img2img_mode:
                     with gr.TabItem('img2img|图像到图像', id='img2img'):
-                        init_img = gr.Image(label="Image for img2img", elem_id="img2img_image", show_label=False, source="upload", interactive=True, type="pil", tool=cmd_opts.gradio_img2img_tool)
+                        init_img = gr.Image(label="Image for img2img", elem_id="img2img_image", show_label=False, source="upload", interactive=True, type="pil", tool=cmd_opts.gradio_img2img_tool).style(height=480)
 
                     with gr.TabItem('Inpaint|蒙板绘图', id='inpaint'):
-                        init_img_with_mask = gr.Image(label="Image for inpainting with mask",  show_label=False, elem_id="img2maskimg", source="upload", interactive=True, type="pil", tool="sketch", image_mode="RGBA")
+                        init_img_with_mask = gr.Image(label="Image for inpainting with mask",  show_label=False, elem_id="img2maskimg", source="upload", interactive=True, type="pil", tool="sketch", image_mode="RGBA").style(height=480)
 
                         init_img_inpaint = gr.Image(label="Image for img2img", show_label=False, source="upload", interactive=True, type="pil", visible=False, elem_id="img_inpaint_base")
                         init_mask_inpaint = gr.Image(label="Mask|蒙板图像", source="upload", interactive=True, type="pil", visible=False, elem_id="img_inpaint_mask")
@@ -804,7 +831,7 @@ def create_ui(wrap_gradio_gpu_call):
                     img2img_preview = gr.Image(elem_id='img2img_preview', visible=False)
                     img2img_gallery = gr.Gallery(label='Output', show_label=False, elem_id='img2img_gallery').style(grid=4)
 
-                with gr.Group():
+                with gr.Column():
                     with gr.Row():
                         save = gr.Button('Save|保存')
                         img2img_send_to_img2img = gr.Button('Send to img2img|发送到图像到图像')
@@ -1166,6 +1193,7 @@ def create_ui(wrap_gradio_gpu_call):
                     train_embedding_name = gr.Dropdown(label='Embedding|嵌入', choices=sorted(sd_hijack.model_hijack.embedding_db.word_embeddings.keys()))
                     train_hypernetwork_name = gr.Dropdown(label='Hypernetwork|超网络', choices=[x for x in shared.hypernetworks.keys()])
                     learn_rate = gr.Textbox(label='Learning rate|学习率', placeholder="Learning rate", value="0.005")
+                    batch_size = gr.Number(label='Batch size', value=1, precision=0)
                     dataset_directory = gr.Textbox(label='Dataset directory|数据集目录', placeholder="Path to directory with input images|包含输入图像的目录路径")
                     log_directory = gr.Textbox(label='Log directory|日志目录', placeholder="Path to directory where to write outputs|写入输出的目录路径", value="textual_inversion")
                     template_file = gr.Textbox(label='Prompt template file|提示词模板文件', value=os.path.join(script_path, "textual_inversion_templates", "style_filewords.txt"))
@@ -1244,6 +1272,7 @@ def create_ui(wrap_gradio_gpu_call):
             inputs=[
                 train_embedding_name,
                 learn_rate,
+                batch_size,
                 dataset_directory,
                 log_directory,
                 training_width,
@@ -1268,6 +1297,7 @@ def create_ui(wrap_gradio_gpu_call):
             inputs=[
                 train_hypernetwork_name,
                 learn_rate,
+                batch_size,
                 dataset_directory,
                 log_directory,
                 steps,

@@ -218,6 +218,7 @@ options_templates.update(options_section(('upscaling', "Upscaling|放大"), {
     "SWIN_tile_overlap": OptionInfo(8, "Tile overlap, in pixels for SwinIR. Low values = visible seam.|SwinIR放大器的平铺重叠，低数值=可见接缝", gr.Slider, {"minimum": 0, "maximum": 48, "step": 1}),
     "ldsr_steps": OptionInfo(100, "LDSR processing steps. Lower = faster|LDSR处理步数。更低=更快", gr.Slider, {"minimum": 1, "maximum": 200, "step": 1}),
     "upscaler_for_img2img": OptionInfo(None, "Upscaler for img2img|图像到图像的放大器", gr.Dropdown, lambda: {"choices": [x.name for x in sd_upscalers]}),
+    "use_scale_latent_for_hires_fix": OptionInfo(False, "Upscale latent space image when doing hires. fix"),
 }))
 
 options_templates.update(options_section(('face-restoration', "Face restoration|脸部修复"), {
@@ -242,6 +243,7 @@ options_templates.update(options_section(('training', "TrainingTraining|训练")
 
 options_templates.update(options_section(('sd', "Stable Diffusion|稳定扩散"), {
     "sd_model_checkpoint": OptionInfo(None, "Stable Diffusion checkpoint|稳定扩散检查点", gr.Dropdown, lambda: {"choices": modules.sd_models.checkpoint_tiles()}, refresh=sd_models.list_models),
+    "sd_checkpoint_cache": OptionInfo(0, "Checkpoints to cache in RAM", gr.Slider, {"minimum": 0, "maximum": 10, "step": 1}),
     "sd_hypernetwork": OptionInfo("None", "Hypernetwork", gr.Dropdown, lambda: {"choices": ["None"] + [x for x in hypernetworks.keys()]}, refresh=reload_hypernetworks),
     "sd_hypernetwork_strength": OptionInfo(1.0, "Hypernetwork strength超网格强度", gr.Slider, {"minimum": 0.0, "maximum": 1.0, "step": 0.001}),
     "img2img_color_correction": OptionInfo(False, "Apply color correction to img2img results to match original colors.|对图像到图像结果应用颜色校正以匹配原始颜色。"),
@@ -255,7 +257,6 @@ options_templates.update(options_section(('sd', "Stable Diffusion|稳定扩散")
     "filter_nsfw": OptionInfo(False, "Filter NSFW content|过滤NSFW（可能社死）内容"),
     'CLIP_stop_at_last_layers': OptionInfo(1, "Stop At last layers of CLIP model|停止CLIP模型的最后一层", gr.Slider, {"minimum": 1, "maximum": 12, "step": 1}),
     "random_artist_categories": OptionInfo([], "Allowed categories for random artists selection when using the Roll button|使用“滚动”按钮时允许随机艺术家选择的类别", gr.CheckboxGroup, {"choices": artist_db.categories()}),
-    'quicksettings': OptionInfo("sd_model_checkpoint", "Quicksettings list|快速设置列表"),
 }))
 
 options_templates.update(options_section(('interrogate', "Interrogate Options|查询选项(反向训练、反求提示词)"), {
@@ -283,6 +284,7 @@ options_templates.update(options_section(('ui', "User interface|用户界面"), 
     "js_modal_lightbox": OptionInfo(True, "Enable full page image viewer|启用整页图像查看器"),
     "js_modal_lightbox_initially_zoomed": OptionInfo(True, "Show images zoomed in by default in full page image viewer|在整页图像查看器中显示默认放大的图像"),
     "show_progress_in_title": OptionInfo(True, "Show generation progress in window title.|在窗口标题中显示生成进度"),
+    'quicksettings': OptionInfo("sd_model_checkpoint", "Quicksettings list|快速设置列表"),
 }))
 
 options_templates.update(options_section(('sampler-params', "Sampler parameters|采样器参数"), {

@@ -16,6 +16,8 @@ titles = {
     "\u{1f3a8}": "添加一个随机艺术家名字到提示词",
     "\u2199\ufe0f": "从提示词获取生成参数(作者挨打不写说明，测了半小时..咳咳，功能是这样，生成了图片下面由三行参数，第一行是提示词，第二行是参数，第三行是花费时间，所以你可以把第二行参数复制到提示词那里，它会自动帮助你设置成那些参数...)",
     "\u{1f4c2}": "打开输出文件夹",
+    "\u{1f4be}": "Save style",
+    "\u{1f4cb}": "Apply selected styles to current prompt",
 
     "Inpaint a part of image": "Draw a mask over an image, and the script will regenerate the masked area with content according to prompt",
     "SD upscale": "Upscale image normally, split result into tiles, improve each tile using img2img, merge whole image back",
