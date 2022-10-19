@@ -334,12 +334,6 @@ def process_images(p: StableDiffusionProcessing) -> Processed:
     seed = get_fixed_seed(p.seed)
     subseed = get_fixed_seed(p.subseed)
 
-    if p.outpath_samples is not None:
-        os.makedirs(p.outpath_samples, exist_ok=True)
-
-    if p.outpath_grids is not None:
-        os.makedirs(p.outpath_grids, exist_ok=True)
-
     modules.sd_hijack.model_hijack.apply_circular(p.tiling)
     modules.sd_hijack.model_hijack.clear_comments()
 
@@ -407,12 +401,6 @@ def process_images(p: StableDiffusionProcessing) -> Processed:
 
             with devices.autocast():
                 samples_ddim = p.sample(conditioning=c, unconditional_conditioning=uc, seeds=seeds, subseeds=subseeds, subseed_strength=p.subseed_strength)
-
-            if state.interrupted or state.skipped:
-
-                # if we are interrupted, sample returns just noise
-                # use the image collected previously in sampler loop
-                samples_ddim = shared.state.current_latent
 
             samples_ddim = samples_ddim.to(devices.dtype_vae)
             x_samples_ddim = decode_first_stage(p.sd_model, samples_ddim)
