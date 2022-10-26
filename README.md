@@ -3,6 +3,8 @@ A browser interface based on Gradio library for Stable Diffusion.
 
 汉化了部分文案。
 
+本项目不再更新，主项目已经支持汉化。主项目更新到最新版后，在设置界面支持切换语言。
+
 感谢[只剩一瓶辣椒酱](https://space.bilibili.com/35723238)的详细教程以及汉化：https://www.bilibili.com/video/BV1V8411s76T/
 
 个人[体验教程](https://www.wolai.com/yuexianzhe/hoMDtpk1oDkq2dvXyBQeJq)
